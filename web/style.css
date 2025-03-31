@@ -68,6 +68,19 @@ body {
     height: 60vh;
 
     padding: 0;
+
+    & #fieldImg {
+        display: none; /*hide until the js is able configure its styling*/
+    }
+    & >div {
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+
+        box-shadow: inset 0 0 40px 0 color-mix(in oklab, var(--col-nord0) 100%, black 33%); /*vignette*/
+    }
 }
 
 #properties {
