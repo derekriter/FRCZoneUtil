@@ -1,0 +1,16 @@
+{
+  "name": "frczoneutil",
+  "version": "1.0.0",
+  "description": "A web interface for FRC Zone Utility",
+  "license": "ISC",
+  "author": "Derek Riter",
+  "type": "commonjs",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "electron": "^35.1.2"
+  }
+}
