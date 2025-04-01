@@ -67,10 +67,16 @@ body {
     width: 70vw;
     height: 60vh;
 
+    cursor: move;
+
     padding: 0;
+    overflow: hidden;
 
     & #fieldImg {
-        display: none; /*hide until the js is able configure its styling*/
+        position: absolute;
+
+        user-select: none;
+        box-shadow: 0 0 40px 0 color-mix(in oklab, var(--col-nord0) 100%, black 20%);
     }
     & >div {
         position: absolute;
