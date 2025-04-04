@@ -5,6 +5,22 @@ class HierarchyPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Placeholder();
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              flex: 1,
+              child: OutlinedButton(onPressed: () {}, child: Text("Save As")),
+            ),
+            Expanded(
+              flex: 1,
+              child: OutlinedButton(onPressed: () {}, child: Text("Open")),
+            ),
+          ],
+        ),
+      ],
+    );
   }
 }
