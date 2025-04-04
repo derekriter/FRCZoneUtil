@@ -1,3 +1,4 @@
+import 'package:app/field.dart';
 import 'package:flutter/material.dart';
 
 class HierarchyPanel extends StatelessWidget {
@@ -16,7 +17,12 @@ class HierarchyPanel extends StatelessWidget {
             ),
             Expanded(
               flex: 1,
-              child: OutlinedButton(onPressed: () {}, child: Text("Open")),
+              child: OutlinedButton(
+                onPressed: () {
+                  FieldData("fields/Reefscape2025.json");
+                },
+                child: Text("Open"),
+              ),
             ),
           ],
         ),

@@ -1,10 +1,11 @@
 {
-  "image": "../fields/Reefscape2025.svg",
-  "size": {
+  "imagePath": "fields/Reefscape2025.svg",
+  "displayName": "Reefscape (2025)",
+  "fieldDimensions": {
     "x": 17.54823,
     "y": 8.0518
   },
-  "boundingBox": {
+  "fieldBoundingBox": {
     "x1": 3549.59,
     "y1": 13064.39,
     "x2": 28450.61,
