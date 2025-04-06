@@ -10,7 +10,7 @@ class FieldPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Placeholder();
+    return Image(image: AssetImage("fields/Reefscape2025.png"));
   }
 }
 
