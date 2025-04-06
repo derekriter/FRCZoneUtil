@@ -3,16 +3,74 @@ import 'dart:math';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 
+import 'loader.dart';
 import 'math.dart';
 
-class FieldPanel extends StatelessWidget {
+class FieldPanel extends StatefulWidget {
   const FieldPanel({super.key});
 
   @override
+  State<FieldPanel> createState() => _FieldPanelState();
+}
+
+class _FieldPanelState extends State<FieldPanel> {
+  var displayState = _FieldDisplayState.none;
+  FieldData? fieldData;
+
+  @override
   Widget build(BuildContext context) {
-    return Image(image: AssetImage("fields/Reefscape2025.png"));
+    if (displayState == _FieldDisplayState.none) {
+      loadPackagedJSON("res/Reefscape2025.json")
+          .then((json) {
+            try {
+              fieldData = FieldData.fromJSON(json);
+
+              setState(() {
+                displayState = _FieldDisplayState.success;
+              });
+            } catch (err) {
+              print(err);
+
+              setState(() {
+                displayState = _FieldDisplayState.error;
+                fieldData = null;
+              });
+            }
+          })
+          .onError((err, _) {
+            print(err);
+
+            setState(() {
+              displayState = _FieldDisplayState.error;
+              fieldData = null;
+            });
+          });
+
+      setState(() {
+        displayState = _FieldDisplayState.loading;
+        fieldData = null;
+      });
+    }
+
+    switch (displayState) {
+      case _FieldDisplayState.loading:
+        return Text("Loading...");
+
+      case _FieldDisplayState.error:
+        return Text("Error");
+
+      case _FieldDisplayState.success:
+        assert(fieldData != null);
+        return Image.asset(fieldData!.imagePath); /*can't figure out a way to
+         check if the image can be loaded, just pray*/
+
+      case _FieldDisplayState.none:
+        return Placeholder();
+    }
   }
 }
+
+enum _FieldDisplayState { loading, error, success, none }
 
 class FieldData extends Equatable {
   const FieldData({
@@ -73,7 +131,7 @@ class FieldData extends Equatable {
     } else if (fieldBBRaw is! Map<String, dynamic>) {
       throw FormatException(
         "Invalid JSON, optional field 'fieldBoundingBox' not of type "
-        "{double x1, double y1, double x2, double y2} in $json",
+        "{num x1, num y1, num x2, num y2} in $json",
       );
     } else {
       try {
@@ -86,7 +144,7 @@ class FieldData extends Equatable {
       } catch (_) {
         throw FormatException(
           "Invalid JSON, optional field 'fieldBoundingBox' is not of type "
-          "{double x1, double y1, double x2, double y2} in $json",
+          "{num x1, num y1, num x2, num y2} in $json",
         );
       }
     }
@@ -122,38 +180,38 @@ class _FieldBB {
     required this.y2,
   });
 
-  final double x1, y1, x2, y2;
+  final num x1, y1, x2, y2;
 
   factory _FieldBB.fromJSON(Map<String, dynamic> json) {
     final x1 = json["x1"];
-    if (x1 is! double) {
+    if (x1 is! num) {
       throw FormatException(
         "Invalid JSON, required field 'x1' is not of type"
-        " double",
+        " num",
       );
     }
 
     final y1 = json["y1"];
-    if (y1 is! double) {
+    if (y1 is! num) {
       throw FormatException(
         "Invalid JSON, required field 'y1' is not of type"
-        " double",
+        " num",
       );
     }
 
     final x2 = json["x2"];
-    if (x2 is! double) {
+    if (x2 is! num) {
       throw FormatException(
         "Invalid JSON, required field 'x2' is not of type"
-        " double",
+        " num",
       );
     }
 
     final y2 = json["y2"];
-    if (y2 is! double) {
+    if (y2 is! num) {
       throw FormatException(
         "Invalid JSON, required field 'y2' is not of type"
-        " double",
+        " num",
       );
     }
 

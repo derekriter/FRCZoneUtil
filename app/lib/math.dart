@@ -1,23 +1,23 @@
 import 'package:equatable/equatable.dart';
 
 class Vector2d extends Equatable {
-  double x;
-  double y;
+  num x;
+  num y;
 
   Vector2d(this.x, this.y);
 
   factory Vector2d.fromJSON(Map<String, dynamic> json) {
     final x = json["x"];
-    if (x is! double) {
+    if (x is! num) {
       throw FormatException(
-        "Invalid JSON, required field 'x' not of type double in $json",
+        "Invalid JSON, required field 'x' not of type num in $json",
       );
     }
 
     final y = json["y"];
-    if (y is! double) {
+    if (y is! num) {
       throw FormatException(
-        "Invalid JSON, required field 'y' not of type double in $json",
+        "Invalid JSON, required field 'y' not of type num in $json",
       );
     }
 
