@@ -1,11 +1,21 @@
-import 'package:app/field.dart';
 import 'package:flutter/material.dart';
+
+import 'field.dart';
+import 'loader.dart';
 
 class HierarchyPanel extends StatelessWidget {
   const HierarchyPanel({super.key});
 
   @override
   Widget build(BuildContext context) {
+    loadPackagedJSON("fields/Reefscape2025.json")
+        .then((json) {
+          print(FieldData.fromJSON(json));
+        })
+        .onError((err, _) {
+          print(err);
+        });
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
       children: [
@@ -17,12 +27,7 @@ class HierarchyPanel extends StatelessWidget {
             ),
             Expanded(
               flex: 1,
-              child: OutlinedButton(
-                onPressed: () {
-                  FieldData("fields/Reefscape2025.json");
-                },
-                child: Text("Open"),
-              ),
+              child: OutlinedButton(onPressed: () {}, child: Text("Open")),
             ),
           ],
         ),
