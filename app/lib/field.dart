@@ -14,63 +14,113 @@ class FieldPanel extends StatefulWidget {
 }
 
 class _FieldPanelState extends State<FieldPanel> {
-  var displayState = _FieldDisplayState.none;
+  var displayState = FieldDisplayState.none;
   FieldData? fieldData;
 
   @override
   Widget build(BuildContext context) {
-    if (displayState == _FieldDisplayState.none) {
+    if (getDisplayState == FieldDisplayState.none) {
       loadPackagedJSON("res/Reefscape2025.json")
           .then((json) {
             try {
-              fieldData = FieldData.fromJSON(json);
-
-              setState(() {
-                displayState = _FieldDisplayState.success;
-              });
+              setDisplaySuccess(FieldData.fromJSON(json));
             } catch (err) {
               print(err);
 
-              setState(() {
-                displayState = _FieldDisplayState.error;
-                fieldData = null;
-              });
+              setDisplayError();
             }
           })
           .onError((err, _) {
             print(err);
 
-            setState(() {
-              displayState = _FieldDisplayState.error;
-              fieldData = null;
-            });
+            setDisplayError();
           });
 
-      setState(() {
-        displayState = _FieldDisplayState.loading;
-        fieldData = null;
-      });
+      setDisplayLoading();
     }
 
-    switch (displayState) {
-      case _FieldDisplayState.loading:
+    return FieldMap(
+      getDisplayState: () => getDisplayState,
+      getHasData: () => getHasData,
+      getFieldData: () => getFieldData,
+    );
+  }
+
+  void setDisplayNone() {
+    setState(() {
+      displayState = FieldDisplayState.none;
+      fieldData = null;
+    });
+  }
+
+  void setDisplayLoading() {
+    setState(() {
+      displayState = FieldDisplayState.loading;
+      fieldData = null;
+    });
+  }
+
+  void setDisplayError() {
+    setState(() {
+      displayState = FieldDisplayState.error;
+      fieldData = null;
+    });
+  }
+
+  void setDisplaySuccess(FieldData data) {
+    setState(() {
+      displayState = FieldDisplayState.success;
+      fieldData = data;
+    });
+  }
+
+  FieldDisplayState get getDisplayState => displayState;
+
+  bool get getHasData => fieldData != null;
+
+  FieldData? get getFieldData => fieldData;
+}
+
+class FieldMap extends StatelessWidget {
+  const FieldMap({
+    super.key,
+    required this.getDisplayState,
+    required this.getHasData,
+    required this.getFieldData,
+  });
+
+  final FieldDisplayState Function() getDisplayState;
+  final bool Function() getHasData;
+  final FieldData? Function() getFieldData;
+
+  @override
+  Widget build(BuildContext context) {
+    switch (getDisplayState()) {
+      case FieldDisplayState.none:
+        return Placeholder();
+
+      case FieldDisplayState.loading:
         return Text("Loading...");
 
-      case _FieldDisplayState.error:
+      case FieldDisplayState.error:
         return Text("Error");
 
-      case _FieldDisplayState.success:
-        assert(fieldData != null);
-        return Image.asset(fieldData!.imagePath); /*can't figure out a way to
-         check if the image can be loaded, just pray*/
+      case FieldDisplayState.success:
+        assert(getHasData());
+        return Image.asset(
+          getFieldData()!.imagePath,
+          errorBuilder: (context, err, _) {
+            print(err);
 
-      case _FieldDisplayState.none:
-        return Placeholder();
+            //needs further work
+            return Placeholder();
+          },
+        );
     }
   }
 }
 
-enum _FieldDisplayState { loading, error, success, none }
+enum FieldDisplayState { none, loading, error, success }
 
 class FieldData extends Equatable {
   const FieldData({
