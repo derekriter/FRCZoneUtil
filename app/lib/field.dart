@@ -3,8 +3,8 @@ import 'dart:math';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 
+import 'data.dart';
 import 'loader.dart';
-import 'math.dart';
 
 class FieldPanel extends StatefulWidget {
   const FieldPanel({super.key});
@@ -16,6 +16,14 @@ class FieldPanel extends StatefulWidget {
 class _FieldPanelState extends State<FieldPanel> {
   var displayState = FieldDisplayState.none;
   FieldData? fieldData;
+  List<Zone> zones = [
+    Zone(
+      name: "test",
+      id: 0,
+      points: [Vector2d(0, 0), Vector2d(120, 80), Vector2d(100, 230)],
+      color: Colors.blue,
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -39,10 +47,13 @@ class _FieldPanelState extends State<FieldPanel> {
       setDisplayLoading();
     }
 
-    return FieldMap(
-      getDisplayState: () => getDisplayState,
-      getHasData: () => getHasData,
-      getFieldData: () => getFieldData,
+    return CustomPaint(
+      foregroundPainter: FieldOverlay(getZones: () => getZones),
+      child: FieldMap(
+        getDisplayState: () => getDisplayState,
+        getHasData: () => getHasData,
+        getFieldData: () => getFieldData,
+      ),
     );
   }
 
@@ -79,6 +90,8 @@ class _FieldPanelState extends State<FieldPanel> {
   bool get getHasData => fieldData != null;
 
   FieldData? get getFieldData => fieldData;
+
+  List<Zone> get getZones => zones;
 }
 
 class FieldMap extends StatelessWidget {
@@ -117,6 +130,62 @@ class FieldMap extends StatelessWidget {
           },
         );
     }
+  }
+}
+
+class FieldOverlay extends CustomPainter {
+  const FieldOverlay({required this.getZones});
+
+  final List<Zone> Function() getZones;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    //guarantee that the canvas doesn't draw outside of its bounds
+    canvas.clipRect(Rect.fromLTWH(0, 0, size.width, size.height));
+
+    for (Zone z in getZones()) {
+      _drawZone(canvas, size, z);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    //prob change later
+    return false;
+  }
+
+  void _drawZone(Canvas canvas, Size size, Zone z) {
+    if (z.points.isEmpty) return;
+
+    var polygonStroke =
+        Paint()
+          ..color = z.color
+          ..strokeWidth = 3
+          ..style = PaintingStyle.stroke;
+    var polygonFill =
+        Paint.from(polygonStroke)
+          ..style = PaintingStyle.fill
+          ..color = polygonStroke.color.withAlpha(64);
+    var pointStyle = Paint.from(polygonStroke)..style = PaintingStyle.fill;
+
+    var path = Path();
+    bool isFirst = true;
+    for (var p in z.points) {
+      canvas.drawCircle(Offset(p.x.toDouble(), p.y.toDouble()), 5, pointStyle);
+
+      if (isFirst) {
+        path.moveTo(p.x.toDouble(), p.y.toDouble());
+        isFirst = false;
+        continue;
+      }
+
+      path.lineTo(p.x.toDouble(), p.y.toDouble());
+    }
+    //add line back to starting point
+    path.lineTo(z.points[0].x.toDouble(), z.points[0].y.toDouble());
+
+    canvas.drawPath(path, polygonFill);
+    canvas.drawPath(path, polygonStroke);
   }
 }
 
