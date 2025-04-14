@@ -1,0 +1,14 @@
+{
+  "imagePath": "res/Crescendo2024.png",
+  "displayName": "Crescendo (2024)",
+  "fieldDimensions": {
+    "x": 16.54175,
+    "y": 8.21055
+  },
+  "fieldBoundingBox": {
+    "x1": 925,
+    "y1": 2857,
+    "x2": 6015,
+    "y2": 330
+  }
+}
