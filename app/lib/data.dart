@@ -39,15 +39,16 @@ class Zone extends Equatable {
     required this.id,
     required this.points,
     required this.color,
-  });
+  }) : isVisible = true;
 
   String name;
   int id;
   List<Vector2d> points;
   Color color;
+  bool isVisible;
 
   @override
-  List<Object?> get props => [name, id, points, color];
+  List<Object?> get props => [name, id, points, color, isVisible];
 
   @override
   bool? get stringify => true;

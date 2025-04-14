@@ -4,9 +4,11 @@ import 'dart:ui' as ui;
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import 'data.dart';
 import 'loader.dart';
+import 'main.dart';
 
 class FieldPanel extends StatefulWidget {
   const FieldPanel({super.key});
@@ -18,17 +20,11 @@ class FieldPanel extends StatefulWidget {
 class _FieldPanelState extends State<FieldPanel> {
   FieldDisplayState _displayState = FieldDisplayState.none;
   FieldData? _fieldData;
-  final List<Zone> _zones = [
-    Zone(
-      name: "test",
-      id: 0,
-      points: [Vector2d(0, 0), Vector2d(0, 8.0518), Vector2d(17.54823, 8.0518)],
-      color: Colors.blue,
-    ),
-  ];
 
   @override
   Widget build(BuildContext context) {
+    final appState = context.watch<AppState>();
+
     if (displayState == FieldDisplayState.none) {
       loadPackagedJSON("res/Reefscape2025.json")
           .then((json) {
@@ -70,7 +66,7 @@ class _FieldPanelState extends State<FieldPanel> {
       case FieldDisplayState.success:
         return CustomPaint(
           foregroundPainter: FieldDisplay(
-            getZones: () => zones,
+            getZones: () => appState.getZonesCopy(),
             getHasData: () => hasData,
             getFieldData: () => fieldData,
             getDisplayState: () => displayState,
@@ -114,8 +110,6 @@ class _FieldPanelState extends State<FieldPanel> {
   bool get hasData => _fieldData != null;
 
   FieldData? get fieldData => _fieldData;
-
-  List<Zone> get zones => _zones;
 }
 
 class FieldDisplay extends CustomPainter {
@@ -176,7 +170,10 @@ class FieldDisplay extends CustomPainter {
       fieldPixels.height / data.fieldDimensions.y,
     );
 
-    for (Zone z in getZones()) {
+    List<Zone> zones = getZones();
+    for (Zone z in zones) {
+      if (!z.isVisible) continue;
+
       _drawZone(canvas, size, z, fieldPixels, meterConvFactor);
     }
   }
