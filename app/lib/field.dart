@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:math';
+import 'dart:ui' as ui;
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
@@ -14,9 +16,9 @@ class FieldPanel extends StatefulWidget {
 }
 
 class _FieldPanelState extends State<FieldPanel> {
-  var displayState = FieldDisplayState.none;
-  FieldData? fieldData;
-  List<Zone> zones = [
+  FieldDisplayState _displayState = FieldDisplayState.none;
+  FieldData? _fieldData;
+  final List<Zone> _zones = [
     Zone(
       name: "test",
       id: 0,
@@ -27,11 +29,19 @@ class _FieldPanelState extends State<FieldPanel> {
 
   @override
   Widget build(BuildContext context) {
-    if (getDisplayState == FieldDisplayState.none) {
+    if (displayState == FieldDisplayState.none) {
       loadPackagedJSON("res/Reefscape2025.json")
           .then((json) {
             try {
-              setDisplaySuccess(FieldData.fromJSON(json));
+              FieldData.fromJSON(json)
+                  .then((FieldData data) {
+                    setDisplaySuccess(data);
+                  })
+                  .onError((err, _) {
+                    print(err);
+
+                    setDisplayError();
+                  });
             } catch (err) {
               print(err);
 
@@ -47,68 +57,7 @@ class _FieldPanelState extends State<FieldPanel> {
       setDisplayLoading();
     }
 
-    return CustomPaint(
-      foregroundPainter: FieldOverlay(getZones: () => getZones),
-      child: FieldMap(
-        getDisplayState: () => getDisplayState,
-        getHasData: () => getHasData,
-        getFieldData: () => getFieldData,
-      ),
-    );
-  }
-
-  void setDisplayNone() {
-    setState(() {
-      displayState = FieldDisplayState.none;
-      fieldData = null;
-    });
-  }
-
-  void setDisplayLoading() {
-    setState(() {
-      displayState = FieldDisplayState.loading;
-      fieldData = null;
-    });
-  }
-
-  void setDisplayError() {
-    setState(() {
-      displayState = FieldDisplayState.error;
-      fieldData = null;
-    });
-  }
-
-  void setDisplaySuccess(FieldData data) {
-    setState(() {
-      displayState = FieldDisplayState.success;
-      fieldData = data;
-    });
-  }
-
-  FieldDisplayState get getDisplayState => displayState;
-
-  bool get getHasData => fieldData != null;
-
-  FieldData? get getFieldData => fieldData;
-
-  List<Zone> get getZones => zones;
-}
-
-class FieldMap extends StatelessWidget {
-  const FieldMap({
-    super.key,
-    required this.getDisplayState,
-    required this.getHasData,
-    required this.getFieldData,
-  });
-
-  final FieldDisplayState Function() getDisplayState;
-  final bool Function() getHasData;
-  final FieldData? Function() getFieldData;
-
-  @override
-  Widget build(BuildContext context) {
-    switch (getDisplayState()) {
+    switch (_displayState) {
       case FieldDisplayState.none:
         return Placeholder();
 
@@ -119,29 +68,80 @@ class FieldMap extends StatelessWidget {
         return Text("Error");
 
       case FieldDisplayState.success:
-        assert(getHasData());
-        return Image.asset(
-          getFieldData()!.imagePath,
-          errorBuilder: (context, err, _) {
-            print(err);
-
-            //needs further work
-            return Placeholder();
-          },
+        return CustomPaint(
+          foregroundPainter: FieldDisplay(
+            getZones: () => zones,
+            getHasData: () => hasData,
+            getFieldData: () => fieldData,
+            getDisplayState: () => displayState,
+          ),
+          child: SizedBox.expand() /*use SizedBox to expand CustomPaint to size
+          of containing area. Hacky solution but it works*/,
         );
     }
   }
+
+  void setDisplayNone() {
+    setState(() {
+      _displayState = FieldDisplayState.none;
+      _fieldData = null;
+    });
+  }
+
+  void setDisplayLoading() {
+    setState(() {
+      _displayState = FieldDisplayState.loading;
+      _fieldData = null;
+    });
+  }
+
+  void setDisplayError() {
+    setState(() {
+      _displayState = FieldDisplayState.error;
+      _fieldData = null;
+    });
+  }
+
+  void setDisplaySuccess(FieldData data) {
+    setState(() {
+      _displayState = FieldDisplayState.success;
+      _fieldData = data;
+    });
+  }
+
+  FieldDisplayState get displayState => _displayState;
+
+  bool get hasData => _fieldData != null;
+
+  FieldData? get fieldData => _fieldData;
+
+  List<Zone> get zones => _zones;
 }
 
-class FieldOverlay extends CustomPainter {
-  const FieldOverlay({required this.getZones});
+class FieldDisplay extends CustomPainter {
+  const FieldDisplay({
+    required this.getZones,
+    required this.getHasData,
+    required this.getFieldData,
+    required this.getDisplayState,
+  });
 
   final List<Zone> Function() getZones;
+  final bool Function() getHasData;
+  final FieldData? Function() getFieldData;
+  final FieldDisplayState Function() getDisplayState;
 
   @override
   void paint(Canvas canvas, Size size) {
     //guarantee that the canvas doesn't draw outside of its bounds
     canvas.clipRect(Rect.fromLTWH(0, 0, size.width, size.height));
+
+    if (getDisplayState() != FieldDisplayState.success || !getHasData()) return;
+
+    final FieldData data = getFieldData()!;
+    if (data.image == null || data.imageAspectRatio == null) return;
+
+    final Rect imageBB = _drawMap(canvas, size, data);
 
     for (Zone z in getZones()) {
       _drawZone(canvas, size, z);
@@ -150,27 +150,60 @@ class FieldOverlay extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    //prob change later
-    return false;
+    return true;
+  }
+
+  Rect _drawMap(Canvas canvas, Size size, FieldData data) {
+    ui.Image map = data.image!;
+    double aspectRatio = data.imageAspectRatio!;
+
+    late Size imageSize;
+    if (size.width / aspectRatio <= size.height) {
+      //scale to width of container
+      imageSize = Size(size.width, size.width / aspectRatio);
+    } else {
+      //scale to height of container
+      imageSize = Size(size.height * aspectRatio, size.height);
+    }
+    Rect imageBB = Rect.fromLTWH(
+      (size.width - imageSize.width) / 2,
+      (size.height - imageSize.height) / 2,
+      imageSize.width,
+      imageSize.height,
+    );
+
+    canvas.drawImageRect(
+      map,
+      Rect.fromLTWH(
+        0,
+        0,
+        data.imageWidth!.toDouble(),
+        data.imageHeight!.toDouble(),
+      ),
+      imageBB,
+      Paint(),
+    );
+
+    return imageBB;
   }
 
   void _drawZone(Canvas canvas, Size size, Zone z) {
     if (z.points.isEmpty) return;
 
-    var polygonStroke =
+    final polygonStroke =
         Paint()
           ..color = z.color
           ..strokeWidth = 3
           ..style = PaintingStyle.stroke;
-    var polygonFill =
+    final polygonFill =
         Paint.from(polygonStroke)
           ..style = PaintingStyle.fill
           ..color = polygonStroke.color.withAlpha(64);
-    var pointStyle = Paint.from(polygonStroke)..style = PaintingStyle.fill;
+    final pointStyle = Paint.from(polygonStroke)..style = PaintingStyle.fill;
 
-    var path = Path();
+    final path = Path();
     bool isFirst = true;
-    for (var p in z.points) {
+    for (final p in z.points) {
       canvas.drawCircle(Offset(p.x.toDouble(), p.y.toDouble()), 5, pointStyle);
 
       if (isFirst) {
@@ -197,14 +230,17 @@ class FieldData extends Equatable {
     required this.fieldDimensions,
     String? displayName,
     this.fieldBoundingBox,
+    this.image,
   }) : _displayName = displayName;
 
   final String imagePath;
   final Vector2d fieldDimensions;
   final String? _displayName;
   final List<Vector2d>? fieldBoundingBox;
+  final ui.Image? image;
 
-  factory FieldData.fromJSON(Map<String, dynamic> json) {
+  //hacky way to make an async factory
+  static Future<FieldData> fromJSON(Map<String, dynamic> json) async {
     final imagePath = json["imagePath"];
     if (imagePath is! String) {
       throw FormatException(
@@ -268,16 +304,43 @@ class FieldData extends Equatable {
       }
     }
 
-    return FieldData(
-      imagePath: imagePath,
-      fieldDimensions: fieldDim,
-      displayName: displayName,
-      fieldBoundingBox: fieldBoundingPoints,
+    Image imgWidget = Image.asset(imagePath);
+    ui.Image? img;
+    bool hasRun = false;
+    imgWidget.image
+        .resolve(ImageConfiguration())
+        .addListener(
+          ImageStreamListener((ImageInfo info, bool _) {
+            img = info.image;
+            hasRun = true;
+          }),
+        );
+
+    //hacky way to wait for listener, probably a better way to do it, IDK
+    while (!hasRun) {
+      await Future.delayed(const Duration(milliseconds: 1));
+    }
+
+    return Future<FieldData>.value(
+      FieldData(
+        imagePath: imagePath,
+        fieldDimensions: fieldDim,
+        displayName: displayName,
+        fieldBoundingBox: fieldBoundingPoints,
+        image: img,
+      ),
     );
   }
 
   String get displayName => _displayName ?? imagePath; /*use imagePath if
   displayName is not provided*/
+  int? get imageWidth => image?.width;
+  int? get imageHeight => image?.height;
+  double? get imageAspectRatio {
+    if (imageWidth == null || imageHeight == null) return null;
+
+    return imageWidth! / imageHeight!;
+  }
 
   @override
   List<Object?> get props => [
@@ -285,6 +348,7 @@ class FieldData extends Equatable {
     fieldDimensions,
     _displayName,
     fieldBoundingBox,
+    image,
   ];
 
   @override

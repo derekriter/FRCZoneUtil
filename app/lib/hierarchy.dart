@@ -20,6 +20,7 @@ class HierarchyPanel extends StatelessWidget {
             ),
           ],
         ),
+        Expanded(child: Placeholder()),
       ],
     );
   }
