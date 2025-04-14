@@ -22,7 +22,7 @@ class _FieldPanelState extends State<FieldPanel> {
     Zone(
       name: "test",
       id: 0,
-      points: [Vector2d(0, 0), Vector2d(120, 80), Vector2d(100, 230)],
+      points: [Vector2d(0, 0), Vector2d(0, 8.0518), Vector2d(17.54823, 8.0518)],
       color: Colors.blue,
     ),
   ];
@@ -141,10 +141,43 @@ class FieldDisplay extends CustomPainter {
     final FieldData data = getFieldData()!;
     if (data.image == null || data.imageAspectRatio == null) return;
 
-    final Rect imageBB = _drawMap(canvas, size, data);
+    final (bb: imageBB, convFactor: pixelConvFactor) = _drawMap(
+      canvas,
+      size,
+      data,
+    );
+
+    late final Rect fieldRawPixels;
+    if (data.fieldBoundingBox != null) {
+      Vector2d lb = data.fieldBoundingBox![0];
+      Vector2d rt = data.fieldBoundingBox![1];
+      fieldRawPixels = Rect.fromLTRB(
+        lb.x.toDouble(),
+        rt.y.toDouble(),
+        rt.x.toDouble(),
+        lb.y.toDouble(),
+      );
+    } else {
+      fieldRawPixels = Rect.fromLTWH(
+        0,
+        0,
+        data.imageWidth!.toDouble(),
+        data.imageHeight!.toDouble(),
+      );
+    }
+    final Rect fieldPixels = Rect.fromLTWH(
+      fieldRawPixels.left * pixelConvFactor + imageBB.left,
+      fieldRawPixels.top * pixelConvFactor + imageBB.top,
+      fieldRawPixels.width * pixelConvFactor,
+      fieldRawPixels.height * pixelConvFactor,
+    );
+    final Vector2d meterConvFactor = Vector2d(
+      fieldPixels.width / data.fieldDimensions.x,
+      fieldPixels.height / data.fieldDimensions.y,
+    );
 
     for (Zone z in getZones()) {
-      _drawZone(canvas, size, z);
+      _drawZone(canvas, size, z, fieldPixels, meterConvFactor);
     }
   }
 
@@ -153,17 +186,24 @@ class FieldDisplay extends CustomPainter {
     return true;
   }
 
-  Rect _drawMap(Canvas canvas, Size size, FieldData data) {
+  ({Rect bb, double convFactor}) _drawMap(
+    Canvas canvas,
+    Size size,
+    FieldData data,
+  ) {
     ui.Image map = data.image!;
     double aspectRatio = data.imageAspectRatio!;
 
-    late Size imageSize;
+    late final Size imageSize;
+    late final double factor;
     if (size.width / aspectRatio <= size.height) {
       //scale to width of container
       imageSize = Size(size.width, size.width / aspectRatio);
+      factor = size.width / data.imageWidth!;
     } else {
       //scale to height of container
       imageSize = Size(size.height * aspectRatio, size.height);
+      factor = size.height / data.imageHeight!;
     }
     Rect imageBB = Rect.fromLTWH(
       (size.width - imageSize.width) / 2,
@@ -184,10 +224,16 @@ class FieldDisplay extends CustomPainter {
       Paint(),
     );
 
-    return imageBB;
+    return (bb: imageBB, convFactor: factor);
   }
 
-  void _drawZone(Canvas canvas, Size size, Zone z) {
+  void _drawZone(
+    Canvas canvas,
+    Size size,
+    Zone z,
+    Rect fieldBB,
+    Vector2d meterConvFactor,
+  ) {
     if (z.points.isEmpty) return;
 
     final polygonStroke =
@@ -204,18 +250,34 @@ class FieldDisplay extends CustomPainter {
     final path = Path();
     bool isFirst = true;
     for (final p in z.points) {
-      canvas.drawCircle(Offset(p.x.toDouble(), p.y.toDouble()), 5, pointStyle);
+      canvas.drawCircle(
+        Offset(
+          fieldBB.left + p.x.toDouble() * meterConvFactor.x,
+          fieldBB.bottom - p.y.toDouble() * meterConvFactor.y,
+        ),
+        5,
+        pointStyle,
+      );
 
       if (isFirst) {
-        path.moveTo(p.x.toDouble(), p.y.toDouble());
+        path.moveTo(
+          fieldBB.left + p.x.toDouble() * meterConvFactor.x,
+          fieldBB.bottom - p.y.toDouble() * meterConvFactor.y,
+        );
         isFirst = false;
         continue;
       }
 
-      path.lineTo(p.x.toDouble(), p.y.toDouble());
+      path.lineTo(
+        fieldBB.left + p.x.toDouble() * meterConvFactor.x,
+        fieldBB.bottom - p.y.toDouble() * meterConvFactor.y,
+      );
     }
     //add line back to starting point
-    path.lineTo(z.points[0].x.toDouble(), z.points[0].y.toDouble());
+    path.lineTo(
+      fieldBB.left + z.points[0].x.toDouble() * meterConvFactor.x,
+      fieldBB.bottom - z.points[0].y.toDouble() * meterConvFactor.y,
+    );
 
     canvas.drawPath(path, polygonFill);
     canvas.drawPath(path, polygonStroke);
