@@ -1,6 +1,7 @@
 import 'package:app/field.dart';
 import 'package:app/hierarchy.dart';
 import 'package:app/properties.dart';
+import 'package:app/toolbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
@@ -44,7 +45,12 @@ class HomePage extends StatelessWidget {
     return Scaffold(
       body: Row(
         children: [
-          Expanded(flex: 3, child: HierarchyPanel()),
+          Expanded(
+            flex: 3,
+            child: Column(
+              children: [ToolbarPanel(), Expanded(child: HierarchyPanel())],
+            ),
+          ),
           Expanded(
             flex: 7,
             child: Column(
