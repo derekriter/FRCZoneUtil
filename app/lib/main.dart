@@ -91,9 +91,9 @@ class AppState extends ChangeNotifier {
       );
     }
 
-    final bool updateDisplay = _selectedMap != val;
     _selectedMap = val;
     loadMapData();
+
     notifyListeners();
   }
 
