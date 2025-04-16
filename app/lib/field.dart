@@ -102,12 +102,17 @@ class MapDisplay extends CustomPainter {
     final MapData data = mapData()!;
     if (data.image == null || data.imageAspectRatio == null) return;
 
+    /*
+      imageBB = bounding box of the map in screen pixels relative to the canvas
+      pixelConvFactor = conversion factor from raw image pixels to screen pixels
+     */
     final (bb: imageBB, convFactor: pixelConvFactor) = _drawMap(
       canvas,
       size,
       data,
     );
 
+    //the bounding box of the field in raw pixels relative to the map
     late final Rect fieldRawPixels;
     if (data.fieldBoundingBox != null) {
       Vector2d lb = data.fieldBoundingBox![0];
@@ -126,12 +131,14 @@ class MapDisplay extends CustomPainter {
         data.imageHeight!.toDouble(),
       );
     }
+    //the bounding box of the field in screen pixels, relative to the canvas
     final Rect fieldPixels = Rect.fromLTWH(
       fieldRawPixels.left * pixelConvFactor + imageBB.left,
       fieldRawPixels.top * pixelConvFactor + imageBB.top,
       fieldRawPixels.width * pixelConvFactor,
       fieldRawPixels.height * pixelConvFactor,
     );
+    //converts screen pixels to meters
     final Vector2d meterConvFactor = Vector2d(
       fieldPixels.width / data.fieldDimensions.x,
       fieldPixels.height / data.fieldDimensions.y,
