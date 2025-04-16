@@ -18,6 +18,10 @@ class FieldPanel extends StatelessWidget {
     final appState = context.watch<AppState>();
     final ThemeData theme = Theme.of(context);
 
+    final boldDimension = theme.textTheme.bodyMedium!.copyWith(
+      fontWeight: FontWeight.bold,
+    );
+
     late final Widget map;
     switch (appState.mapState) {
       case MapState.none:
@@ -49,6 +53,25 @@ class FieldPanel extends StatelessWidget {
         break;
     }
 
+    late final Widget dimensionLabel;
+    if (!appState.hasMapData) {
+      dimensionLabel = Text("WxH: -x-");
+    } else {
+      final data = appState.mapData!;
+      dimensionLabel = Text.rich(
+        TextSpan(
+          children: [
+            TextSpan(text: "WxH: "),
+            TextSpan(
+              text: "${data.fieldDimensions.x}x${data.fieldDimensions.y}",
+              style: boldDimension,
+            ),
+          ],
+        ),
+        style: theme.textTheme.bodyMedium,
+      );
+    }
+
     return Column(
       children: [
         Expanded(child: map),
@@ -57,6 +80,12 @@ class FieldPanel extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
+              Container(
+                color: theme.colorScheme.secondaryContainer,
+                padding: EdgeInsets.all(2),
+                child: dimensionLabel,
+              ),
+              SizedBox(width: 30),
               DropdownButton(
                 value: appState.selectedMap,
                 items:
