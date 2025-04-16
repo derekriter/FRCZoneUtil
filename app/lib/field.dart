@@ -6,133 +6,109 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'constants.dart';
 import 'data.dart';
-import 'loader.dart';
 import 'main.dart';
 
-class FieldPanel extends StatefulWidget {
-  const FieldPanel({super.key});
+class FieldPanel extends StatelessWidget {
+  const FieldPanel({
+    super.key,
+    required this.mapState,
+    required this.hasMapData,
+    required this.mapData,
+  });
 
-  @override
-  State<FieldPanel> createState() => _FieldPanelState();
-}
-
-class _FieldPanelState extends State<FieldPanel> {
-  FieldDisplayState _displayState = FieldDisplayState.none;
-  FieldData? _fieldData;
+  final MapState Function() mapState;
+  final bool Function() hasMapData;
+  final MapData? Function() mapData;
 
   @override
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
+    final ThemeData theme = Theme.of(context);
 
-    if (displayState == FieldDisplayState.none) {
-      loadPackagedJSON("res/Reefscape2025.json")
-          .then((json) {
-            try {
-              FieldData.fromJSON(json)
-                  .then((FieldData data) {
-                    setDisplaySuccess(data);
-                  })
-                  .onError((err, _) {
-                    print(err);
+    late final Widget map;
+    switch (mapState()) {
+      case MapState.none:
+        map = Text(
+          "If you are seeing this text long enough to be able to "
+          "read it, something went wrong.",
+        );
+        break;
 
-                    setDisplayError();
-                  });
-            } catch (err) {
-              print(err);
+      case MapState.loading:
+        map = Text("Loading...");
+        break;
 
-              setDisplayError();
-            }
-          })
-          .onError((err, _) {
-            print(err);
+      case MapState.error:
+        map = Text("Error");
+        break;
 
-            setDisplayError();
-          });
-
-      setDisplayLoading();
-    }
-
-    switch (_displayState) {
-      case FieldDisplayState.none:
-        return Placeholder();
-
-      case FieldDisplayState.loading:
-        return Text("Loading...");
-
-      case FieldDisplayState.error:
-        return Text("Error");
-
-      case FieldDisplayState.success:
-        return CustomPaint(
-          foregroundPainter: FieldDisplay(
-            getZones: () => appState.getZonesCopy(),
-            getHasData: () => hasData,
-            getFieldData: () => fieldData,
-            getDisplayState: () => displayState,
+      case MapState.success:
+        map = CustomPaint(
+          foregroundPainter: MapDisplay(
+            mapState: mapState,
+            hasMapData: hasMapData,
+            mapData: mapData,
+            zones: () => appState.zones,
           ),
           child: SizedBox.expand() /*use SizedBox to expand CustomPaint to size
           of containing area. Hacky solution but it works*/,
         );
+        break;
     }
+
+    return Column(
+      children: [
+        Expanded(child: map),
+        Container(
+          color: theme.colorScheme.primaryContainer,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              DropdownButton(
+                value: appState.selectedMap,
+                items:
+                    mapLocations.map((String val) {
+                      return DropdownMenuItem<String>(
+                        value: val,
+                        child: Text(MapData.getDisplayNameFromPath(val)),
+                      );
+                    }).toList(),
+                onChanged: (String? val) {
+                  if (val == null) return;
+                  appState.setSelectedMap(val);
+                },
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
-
-  void setDisplayNone() {
-    setState(() {
-      _displayState = FieldDisplayState.none;
-      _fieldData = null;
-    });
-  }
-
-  void setDisplayLoading() {
-    setState(() {
-      _displayState = FieldDisplayState.loading;
-      _fieldData = null;
-    });
-  }
-
-  void setDisplayError() {
-    setState(() {
-      _displayState = FieldDisplayState.error;
-      _fieldData = null;
-    });
-  }
-
-  void setDisplaySuccess(FieldData data) {
-    setState(() {
-      _displayState = FieldDisplayState.success;
-      _fieldData = data;
-    });
-  }
-
-  FieldDisplayState get displayState => _displayState;
-
-  bool get hasData => _fieldData != null;
-
-  FieldData? get fieldData => _fieldData;
 }
 
-class FieldDisplay extends CustomPainter {
-  const FieldDisplay({
-    required this.getZones,
-    required this.getHasData,
-    required this.getFieldData,
-    required this.getDisplayState,
+class MapDisplay extends CustomPainter {
+  const MapDisplay({
+    required this.mapState,
+    required this.hasMapData,
+    required this.mapData,
+    required this.zones,
   });
 
-  final List<Zone> Function() getZones;
-  final bool Function() getHasData;
-  final FieldData? Function() getFieldData;
-  final FieldDisplayState Function() getDisplayState;
+  final MapState Function() mapState;
+  final bool Function() hasMapData;
+  final MapData? Function() mapData;
+  final List<Zone> Function() zones;
 
   @override
   void paint(Canvas canvas, Size size) {
     //guarantee that the canvas doesn't draw outside of its bounds
     canvas.clipRect(Rect.fromLTWH(0, 0, size.width, size.height));
 
-    if (getDisplayState() != FieldDisplayState.success || !getHasData()) return;
+    if (mapState() != MapState.success || !hasMapData()) return;
 
-    final FieldData data = getFieldData()!;
+    final MapData data = mapData()!;
     if (data.image == null || data.imageAspectRatio == null) return;
 
     final (bb: imageBB, convFactor: pixelConvFactor) = _drawMap(
@@ -170,8 +146,7 @@ class FieldDisplay extends CustomPainter {
       fieldPixels.height / data.fieldDimensions.y,
     );
 
-    List<Zone> zones = getZones();
-    for (Zone z in zones) {
+    for (Zone z in zones()) {
       if (!z.isVisible) continue;
 
       _drawZone(canvas, size, z, fieldPixels, meterConvFactor);
@@ -186,7 +161,7 @@ class FieldDisplay extends CustomPainter {
   ({Rect bb, double convFactor}) _drawMap(
     Canvas canvas,
     Size size,
-    FieldData data,
+    MapData data,
   ) {
     ui.Image map = data.image!;
     double aspectRatio = data.imageAspectRatio!;
@@ -281,25 +256,23 @@ class FieldDisplay extends CustomPainter {
   }
 }
 
-enum FieldDisplayState { none, loading, error, success }
+enum MapState { none, loading, error, success }
 
-class FieldData extends Equatable {
-  const FieldData({
+class MapData extends Equatable {
+  const MapData({
     required this.imagePath,
     required this.fieldDimensions,
-    String? displayName,
     this.fieldBoundingBox,
     this.image,
-  }) : _displayName = displayName;
+  });
 
   final String imagePath;
   final Vector2d fieldDimensions;
-  final String? _displayName;
   final List<Vector2d>? fieldBoundingBox;
   final ui.Image? image;
 
   //hacky way to make an async factory
-  static Future<FieldData> fromJSON(Map<String, dynamic> json) async {
+  static Future<MapData> fromJSON(Map<String, dynamic> json) async {
     final imagePath = json["imagePath"];
     if (imagePath is! String) {
       throw FormatException(
@@ -330,14 +303,6 @@ class FieldData extends Equatable {
       );
     }
 
-    final displayName = json["displayName"];
-    if (displayName is! String?) {
-      throw FormatException(
-        "Invalid JSON, optional field 'displayName' not of type String in "
-        "$json",
-      );
-    }
-
     final fieldBBRaw = json["fieldBoundingBox"];
     late final List<Vector2d>? fieldBoundingPoints;
     if (fieldBBRaw == null) {
@@ -349,7 +314,7 @@ class FieldData extends Equatable {
       );
     } else {
       try {
-        final fieldBB = _FieldBB.fromJSON(fieldBBRaw);
+        final fieldBB = _MapBB.fromJSON(fieldBBRaw);
 
         fieldBoundingPoints = [
           Vector2d(min(fieldBB.x1, fieldBB.x2), max(fieldBB.y1, fieldBB.y2)),
@@ -380,19 +345,29 @@ class FieldData extends Equatable {
       await Future.delayed(const Duration(milliseconds: 1));
     }
 
-    return Future<FieldData>.value(
-      FieldData(
+    return Future<MapData>.value(
+      MapData(
         imagePath: imagePath,
         fieldDimensions: fieldDim,
-        displayName: displayName,
         fieldBoundingBox: fieldBoundingPoints,
         image: img,
       ),
     );
   }
 
-  String get displayName => _displayName ?? imagePath; /*use imagePath if
-  displayName is not provided*/
+  static String getDisplayNameFromPath(String imgPath) {
+    if (imgPath.isEmpty) return "";
+
+    int start = imgPath.lastIndexOf("/");
+    start++; /*moves forward by one if found, sets to zero if not found*/
+
+    int end = imgPath.lastIndexOf(".");
+    if (end == -1 || end < start) end = imgPath.length;
+
+    return imgPath.substring(start, end);
+  }
+
+  String get displayName => getDisplayNameFromPath(imagePath);
   int? get imageWidth => image?.width;
   int? get imageHeight => image?.height;
   double? get imageAspectRatio {
@@ -405,7 +380,6 @@ class FieldData extends Equatable {
   List<Object?> get props => [
     imagePath,
     fieldDimensions,
-    _displayName,
     fieldBoundingBox,
     image,
   ];
@@ -414,8 +388,8 @@ class FieldData extends Equatable {
   bool? get stringify => true;
 }
 
-class _FieldBB {
-  const _FieldBB({
+class _MapBB {
+  const _MapBB({
     required this.x1,
     required this.y1,
     required this.x2,
@@ -424,7 +398,7 @@ class _FieldBB {
 
   final num x1, y1, x2, y2;
 
-  factory _FieldBB.fromJSON(Map<String, dynamic> json) {
+  factory _MapBB.fromJSON(Map<String, dynamic> json) {
     final x1 = json["x1"];
     if (x1 is! num) {
       throw FormatException(
@@ -457,6 +431,6 @@ class _FieldBB {
       );
     }
 
-    return _FieldBB(x1: x1, y1: y1, x2: x2, y2: y2);
+    return _MapBB(x1: x1, y1: y1, x2: x2, y2: y2);
   }
 }

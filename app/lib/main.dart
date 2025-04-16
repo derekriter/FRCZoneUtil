@@ -1,4 +1,5 @@
-import 'package:app/field.dart';
+import 'dart:async';
+
 import 'package:app/hierarchy.dart';
 import 'package:app/properties.dart';
 import 'package:app/toolbar.dart';
@@ -6,7 +7,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 
+import 'constants.dart';
 import 'data.dart';
+import 'field.dart';
+import 'loader.dart';
 
 void main() async {
   //Set window title
@@ -52,6 +56,7 @@ class AppState extends ChangeNotifier {
       color: Colors.orange,
     ),
   ];
+  String _selectedMap = mapLocations[0]; /*default to first in list*/
 
   void addZone(Zone z) {
     _zones.add(z);
@@ -67,23 +72,7 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  Zone getZone(int index) {
-    if (index < 0 || index >= _zones.length) {
-      throw ArgumentError.value(index, "Argument out of bounds of array");
-    }
-
-    return _zones[index];
-  }
-
-  List<Zone> getZonesCopy() {
-    return List<Zone>.from(_zones);
-  }
-
-  int getZoneCount() {
-    return _zones.length;
-  }
-
-  void toggleZoneVisiblity(int index) {
+  void toggleZoneVisibility(int index) {
     if (index < 0 || index >= _zones.length) {
       throw ArgumentError.value(index, "Argument out of bounds of array");
     }
@@ -91,13 +80,42 @@ class AppState extends ChangeNotifier {
     _zones[index].isVisible = !_zones[index].isVisible;
     notifyListeners();
   }
+
+  void setSelectedMap(String val) {
+    if (!mapLocations.contains(val)) {
+      throw ArgumentError.value(
+        val,
+        "Cannot set selectedMap to non-existant map",
+      );
+    }
+
+    _selectedMap = val;
+    notifyListeners();
+  }
+
+  List<Zone> get zones => _zones;
+  String get selectedMap => _selectedMap;
 }
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
   @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  MapState _mapState = MapState.none;
+  MapData? _mapData;
+
+  @override
   Widget build(BuildContext context) {
+    final appState = context.watch<AppState>();
+
+    if (_mapState == MapState.none) {
+      loadMapData(appState.selectedMap);
+    }
+
     return Scaffold(
       body: Row(
         children: [
@@ -111,7 +129,14 @@ class HomePage extends StatelessWidget {
             flex: 7,
             child: Column(
               children: [
-                Expanded(flex: 6, child: FieldPanel()),
+                Expanded(
+                  flex: 6,
+                  child: FieldPanel(
+                    mapState: () => mapState,
+                    hasMapData: () => hasMapData,
+                    mapData: () => mapData,
+                  ),
+                ),
                 Expanded(flex: 4, child: PropertiesPanel()),
               ],
             ),
@@ -120,4 +145,59 @@ class HomePage extends StatelessWidget {
       ),
     );
   }
+
+  void setMapLoading() {
+    setState(() {
+      _mapState = MapState.loading;
+      _mapData = null;
+    });
+  }
+
+  void setMapError() {
+    setState(() {
+      _mapState = MapState.error;
+      _mapData = null;
+    });
+  }
+
+  void setMapSuccess(MapData data) {
+    setState(() {
+      _mapState = MapState.success;
+      _mapData = data;
+    });
+  }
+
+  void loadMapData(String map) {
+    if (_mapState != MapState.loading) {
+      setMapLoading();
+    }
+
+    loadPackagedJSON(map)
+        .then((json) {
+          try {
+            MapData.fromJSON(json)
+                .then((MapData data) {
+                  setMapSuccess(data);
+                })
+                .onError((err, _) {
+                  print(err);
+
+                  setMapError();
+                });
+          } catch (err) {
+            print(err);
+
+            setMapError();
+          }
+        })
+        .onError((err, _) {
+          print(err);
+
+          setMapError();
+        });
+  }
+
+  MapState get mapState => _mapState;
+  bool get hasMapData => _mapData != null;
+  MapData? get mapData => _mapData;
 }

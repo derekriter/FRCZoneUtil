@@ -15,7 +15,7 @@ class HierarchyPanel extends StatelessWidget {
 
     final ThemeData theme = Theme.of(context);
     final headerStyle = theme.textTheme.titleMedium;
-    final zoneNameStyle = theme.textTheme.headlineSmall;
+    final zoneNameStyle = theme.textTheme.bodyLarge;
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
@@ -25,12 +25,12 @@ class HierarchyPanel extends StatelessWidget {
         Text("Hierarchy", style: headerStyle),
         Expanded(
           child: ListView.separated(
-            itemCount: appState.getZoneCount(),
+            itemCount: appState.zones.length,
             separatorBuilder: (BuildContext context, int i) {
               return SizedBox(height: 5);
             },
             itemBuilder: (BuildContext context, int i) {
-              final Zone z = appState.getZone(i);
+              final Zone z = appState.zones[i];
               return Container(
                 color: z.color,
                 child: Row(
@@ -40,12 +40,12 @@ class HierarchyPanel extends StatelessWidget {
                     ),
                     IconButton(
                       icon: Icon(
-                        appState.getZone(i).isVisible
+                        appState.zones[i].isVisible
                             ? Icons.visibility
                             : Icons.visibility_off,
                       ),
                       onPressed: () {
-                        appState.toggleZoneVisiblity(i);
+                        appState.toggleZoneVisibility(i);
                       },
                     ),
                     IconButton(
@@ -69,8 +69,7 @@ class HierarchyPanel extends StatelessWidget {
                   icon: Icon(Icons.add),
                   onPressed: () {
                     int maxId = 0;
-                    List<Zone> zones = appState.getZonesCopy();
-                    for (Zone z in zones) {
+                    for (Zone z in appState.zones) {
                       maxId = max(maxId, z.id);
                     }
 
