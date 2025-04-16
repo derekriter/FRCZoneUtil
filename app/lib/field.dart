@@ -11,16 +11,7 @@ import 'data.dart';
 import 'main.dart';
 
 class FieldPanel extends StatelessWidget {
-  const FieldPanel({
-    super.key,
-    required this.mapState,
-    required this.hasMapData,
-    required this.mapData,
-  });
-
-  final MapState Function() mapState;
-  final bool Function() hasMapData;
-  final MapData? Function() mapData;
+  const FieldPanel({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +19,7 @@ class FieldPanel extends StatelessWidget {
     final ThemeData theme = Theme.of(context);
 
     late final Widget map;
-    switch (mapState()) {
+    switch (appState.mapState) {
       case MapState.none:
         map = Text(
           "If you are seeing this text long enough to be able to "
@@ -47,9 +38,9 @@ class FieldPanel extends StatelessWidget {
       case MapState.success:
         map = CustomPaint(
           foregroundPainter: MapDisplay(
-            mapState: mapState,
-            hasMapData: hasMapData,
-            mapData: mapData,
+            mapState: () => appState.mapState,
+            hasMapData: () => appState.hasMapData,
+            mapData: () => appState.mapData,
             zones: () => appState.zones,
           ),
           child: SizedBox.expand() /*use SizedBox to expand CustomPaint to size

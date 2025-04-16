@@ -57,6 +57,8 @@ class AppState extends ChangeNotifier {
     ),
   ];
   String _selectedMap = mapLocations[0]; /*default to first in list*/
+  MapState _mapState = MapState.none;
+  MapData? _mapData;
 
   void addZone(Zone z) {
     _zones.add(z);
@@ -89,90 +91,39 @@ class AppState extends ChangeNotifier {
       );
     }
 
+    final bool updateDisplay = _selectedMap != val;
     _selectedMap = val;
+    loadMapData();
     notifyListeners();
   }
 
-  List<Zone> get zones => _zones;
-  String get selectedMap => _selectedMap;
-}
-
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
-
-  @override
-  State<HomePage> createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
-  MapState _mapState = MapState.none;
-  MapData? _mapData;
-
-  @override
-  Widget build(BuildContext context) {
-    final appState = context.watch<AppState>();
-
-    if (_mapState == MapState.none) {
-      loadMapData(appState.selectedMap);
-    }
-
-    return Scaffold(
-      body: Row(
-        children: [
-          Expanded(
-            flex: 3,
-            child: Column(
-              children: [ToolbarPanel(), Expanded(child: HierarchyPanel())],
-            ),
-          ),
-          Expanded(
-            flex: 7,
-            child: Column(
-              children: [
-                Expanded(
-                  flex: 6,
-                  child: FieldPanel(
-                    mapState: () => mapState,
-                    hasMapData: () => hasMapData,
-                    mapData: () => mapData,
-                  ),
-                ),
-                Expanded(flex: 4, child: PropertiesPanel()),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   void setMapLoading() {
-    setState(() {
-      _mapState = MapState.loading;
-      _mapData = null;
-    });
+    _mapState = MapState.loading;
+    _mapData = null;
+    notifyListeners();
   }
 
   void setMapError() {
-    setState(() {
-      _mapState = MapState.error;
-      _mapData = null;
-    });
+    _mapState = MapState.error;
+    _mapData = null;
+    notifyListeners();
   }
 
   void setMapSuccess(MapData data) {
-    setState(() {
-      _mapState = MapState.success;
-      _mapData = data;
-    });
+    _mapState = MapState.success;
+    _mapData = data;
+    notifyListeners();
   }
 
-  void loadMapData(String map) {
-    if (_mapState != MapState.loading) {
+  void loadMapData({bool first = false}) {
+    if (first) {
+      _mapState = MapState.loading;
+      _mapData = null;
+    } else if (_mapState != MapState.loading) {
       setMapLoading();
     }
 
-    loadPackagedJSON(map)
+    loadPackagedJSON(_selectedMap)
         .then((json) {
           try {
             MapData.fromJSON(json)
@@ -200,4 +151,42 @@ class _HomePageState extends State<HomePage> {
   MapState get mapState => _mapState;
   bool get hasMapData => _mapData != null;
   MapData? get mapData => _mapData;
+
+  List<Zone> get zones => _zones;
+  String get selectedMap => _selectedMap;
+}
+
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final appState = context.watch<AppState>();
+
+    if (appState.mapState == MapState.none) {
+      appState.loadMapData(first: true);
+    }
+
+    return Scaffold(
+      body: Row(
+        children: [
+          Expanded(
+            flex: 3,
+            child: Column(
+              children: [ToolbarPanel(), Expanded(child: HierarchyPanel())],
+            ),
+          ),
+          Expanded(
+            flex: 7,
+            child: Column(
+              children: [
+                Expanded(flex: 6, child: FieldPanel()),
+                Expanded(flex: 4, child: PropertiesPanel()),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
