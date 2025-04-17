@@ -97,7 +97,7 @@ class HierarchyPanel extends StatelessWidget {
                           Vector2d(0, 3),
                           Vector2d(2.598, 1.5),
                         ],
-                        color: Colors.white,
+                        color: Colors.grey,
                       ),
                     );
                   },

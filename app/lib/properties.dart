@@ -75,9 +75,11 @@ class PropertiesPanel extends StatelessWidget {
                         Colors.orange,
                         Colors.yellow,
                         Colors.green,
+                        Colors.teal,
                         Colors.blue,
-                        Colors.purple,
+                        Colors.deepPurple,
                         Colors.pink,
+                        Colors.grey,
                       ].map((Color col) {
                         return InkWell(
                           onTap: () {
