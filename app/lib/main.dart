@@ -45,13 +45,11 @@ class AppState extends ChangeNotifier {
   final List<Zone> _zones = [
     Zone(
       name: "Zone1",
-      id: 0,
       points: [Vector2d(0, 0), Vector2d(0, 8.0518), Vector2d(17.54823, 8.0518)],
       color: Colors.blue,
     ),
     Zone(
       name: "Zone2",
-      id: 3,
       points: [Vector2d(3, 2), Vector2d(11, 6), Vector2d(1, 7)],
       color: Colors.orange,
     ),
@@ -59,6 +57,7 @@ class AppState extends ChangeNotifier {
   String _selectedMap = mapLocations[0]; /*default to first in list*/
   MapState _mapState = MapState.none;
   MapData? _mapData;
+  int? _selectedZone; //null means no field is selected
 
   void addZone(Zone z) {
     _zones.add(z);
@@ -71,6 +70,17 @@ class AppState extends ChangeNotifier {
     }
 
     _zones.removeAt(index);
+
+    if (index == _selectedZone) {
+      if (_zones.isEmpty) {
+        _selectedZone = null;
+      } else if (_selectedZone == 0) {
+        _selectedZone = 0; //stay at front of list
+      } else {
+        _selectedZone = _selectedZone! - 1;
+      }
+    }
+
     notifyListeners();
   }
 
@@ -148,12 +158,40 @@ class AppState extends ChangeNotifier {
         });
   }
 
-  MapState get mapState => _mapState;
-  bool get hasMapData => _mapData != null;
-  MapData? get mapData => _mapData;
+  void selectZone(int zone) {
+    if (zone < 0 || zone >= _zones.length) {
+      throw ArgumentError.value(zone, "Argument out of bounds of array");
+    }
+
+    _selectedZone = zone;
+    notifyListeners();
+  }
+
+  void setZoneName(int index, String name) {
+    if (index < 0 || index >= _zones.length) {
+      throw ArgumentError.value(index, "Argument out of bounds of array");
+    }
+
+    _zones[index].name = name;
+    notifyListeners();
+  }
+
+  void setZoneColor(int index, Color col) {
+    if (index < 0 || index >= _zones.length) {
+      throw ArgumentError.value(index, "Argument out of bounds of array");
+    }
+
+    _zones[index].color = col;
+    notifyListeners();
+  }
 
   List<Zone> get zones => _zones;
   String get selectedMap => _selectedMap;
+  MapState get mapState => _mapState;
+  bool get hasMapData => _mapData != null;
+  MapData? get mapData => _mapData;
+  bool get hasSelectedZone => _selectedZone != null;
+  int? get selectedZone => _selectedZone;
 }
 
 class HomePage extends StatelessWidget {

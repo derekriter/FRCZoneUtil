@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -19,7 +17,7 @@ class HierarchyPanel extends StatelessWidget {
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         SizedBox(height: 10),
         Text("Hierarchy", style: headerStyle),
@@ -31,30 +29,52 @@ class HierarchyPanel extends StatelessWidget {
             },
             itemBuilder: (BuildContext context, int i) {
               final Zone z = appState.zones[i];
-              return Container(
-                color: z.color,
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text("${z.name} : ${z.id}", style: zoneNameStyle),
-                    ),
-                    IconButton(
-                      icon: Icon(
-                        appState.zones[i].isVisible
-                            ? Icons.visibility
-                            : Icons.visibility_off,
+              final isSelected = appState.selectedZone == i;
+
+              late final Decoration? outline;
+              if (isSelected) {
+                outline = BoxDecoration(
+                  border: Border.all(
+                    color: theme.colorScheme.outline,
+                    width: 3,
+                  ),
+                );
+              } else {
+                outline = null;
+              }
+
+              return InkWell(
+                onTap: () {
+                  appState.selectZone(i);
+                },
+                child: Container(
+                  color: z.color,
+                  foregroundDecoration: outline,
+                  padding: EdgeInsets.symmetric(horizontal: 5),
+                  child: Row(
+                    children: [
+                      Expanded(child: Text(z.name, style: zoneNameStyle)),
+                      IconButton(
+                        icon: Icon(
+                          appState.zones[i].isVisible
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                        ),
+                        onPressed: () {
+                          appState.toggleZoneVisibility(i);
+                        },
                       ),
-                      onPressed: () {
-                        appState.toggleZoneVisibility(i);
-                      },
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.delete, color: theme.colorScheme.error),
-                      onPressed: () {
-                        appState.removeZone(i);
-                      },
-                    ),
-                  ],
+                      IconButton(
+                        icon: Icon(
+                          Icons.delete,
+                          color: theme.colorScheme.error,
+                        ),
+                        onPressed: () {
+                          appState.removeZone(i);
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               );
             },
@@ -68,16 +88,10 @@ class HierarchyPanel extends StatelessWidget {
                 child: IconButton(
                   icon: Icon(Icons.add),
                   onPressed: () {
-                    int maxId = 0;
-                    for (Zone z in appState.zones) {
-                      maxId = max(maxId, z.id);
-                    }
-
                     //add default zone
                     appState.addZone(
                       Zone(
                         name: "NewZone",
-                        id: maxId + 1,
                         points: [
                           Vector2d(0, 0),
                           Vector2d(0, 3),
