@@ -42,18 +42,7 @@ class AppRoot extends StatelessWidget {
 }
 
 class AppState extends ChangeNotifier {
-  final List<Zone> _zones = [
-    Zone(
-      name: "Zone1",
-      points: [Vector2d(0, 0), Vector2d(0, 8.0518), Vector2d(17.54823, 8.0518)],
-      color: Colors.blue,
-    ),
-    Zone(
-      name: "Zone2",
-      points: [Vector2d(3, 2), Vector2d(11, 6), Vector2d(1, 7)],
-      color: Colors.orange,
-    ),
-  ];
+  final List<Zone> _zones = [];
   String _selectedMap = mapLocations[0]; /*default to first in list*/
   MapState _mapState = MapState.none;
   MapData? _mapData;
@@ -65,18 +54,12 @@ class AppState extends ChangeNotifier {
   }
 
   void removeZone(int index) {
-    if (index < 0 || index >= _zones.length) {
-      throw ArgumentError.value(index, "Argument out of bounds of array");
-    }
-
     _zones.removeAt(index);
 
-    if (index == _selectedZone) {
-      if (_zones.isEmpty) {
+    if (_selectedZone != null) {
+      if (index == _selectedZone) {
         _selectedZone = null;
-      } else if (_selectedZone == 0) {
-        _selectedZone = 0; //stay at front of list
-      } else {
+      } else if (index < _selectedZone!) {
         _selectedZone = _selectedZone! - 1;
       }
     }
@@ -85,10 +68,6 @@ class AppState extends ChangeNotifier {
   }
 
   void toggleZoneVisibility(int index) {
-    if (index < 0 || index >= _zones.length) {
-      throw ArgumentError.value(index, "Argument out of bounds of array");
-    }
-
     _zones[index].isVisible = !_zones[index].isVisible;
     notifyListeners();
   }
@@ -159,29 +138,37 @@ class AppState extends ChangeNotifier {
   }
 
   void selectZone(int zone) {
-    if (zone < 0 || zone >= _zones.length) {
-      throw ArgumentError.value(zone, "Argument out of bounds of array");
-    }
-
     _selectedZone = zone;
     notifyListeners();
   }
 
   void setZoneName(int index, String name) {
-    if (index < 0 || index >= _zones.length) {
-      throw ArgumentError.value(index, "Argument out of bounds of array");
-    }
-
     _zones[index].name = name;
     notifyListeners();
   }
 
   void setZoneColor(int index, Color col) {
-    if (index < 0 || index >= _zones.length) {
-      throw ArgumentError.value(index, "Argument out of bounds of array");
+    _zones[index].color = col;
+    notifyListeners();
+  }
+
+  void setZonePoint(int zone, int point, {double? x, double? y}) {
+    if (x == null && y == null) {
+      return;
     }
 
-    _zones[index].color = col;
+    final prev = _zones[zone].points[point];
+    _zones[zone].points[point] = Vector2d(x ?? prev.x, y ?? prev.y);
+    notifyListeners();
+  }
+
+  void addZonePoint(int zone, Vector2d point) {
+    _zones[zone].points.add(point);
+    notifyListeners();
+  }
+
+  void removeZonePoint(int zone, int point) {
+    _zones[zone].points.removeAt(point);
     notifyListeners();
   }
 

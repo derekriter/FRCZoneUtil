@@ -20,65 +20,72 @@ class HierarchyPanel extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         SizedBox(height: 10),
-        Text("Hierarchy", style: headerStyle),
+        Text("Zones", style: headerStyle),
         Expanded(
-          child: ListView.separated(
-            itemCount: appState.zones.length,
-            separatorBuilder: (BuildContext context, int i) {
-              return SizedBox(height: 5);
-            },
-            itemBuilder: (BuildContext context, int i) {
-              final Zone z = appState.zones[i];
-              final isSelected = appState.selectedZone == i;
+          child:
+              appState.zones.isEmpty
+                  ? Center(
+                    child: Text("Press the + button below to create a zone"),
+                  )
+                  : ListView.separated(
+                    itemCount: appState.zones.length,
+                    separatorBuilder: (BuildContext context, int i) {
+                      return SizedBox(height: 5);
+                    },
+                    itemBuilder: (BuildContext context, int i) {
+                      final Zone z = appState.zones[i];
+                      final isSelected = appState.selectedZone == i;
 
-              late final Decoration? outline;
-              if (isSelected) {
-                outline = BoxDecoration(
-                  border: Border.all(
-                    color: theme.colorScheme.outline,
-                    width: 3,
-                  ),
-                );
-              } else {
-                outline = null;
-              }
+                      late final Decoration? outline;
+                      if (isSelected) {
+                        outline = BoxDecoration(
+                          border: Border.all(
+                            color: theme.colorScheme.outline,
+                            width: 3,
+                          ),
+                        );
+                      } else {
+                        outline = null;
+                      }
 
-              return InkWell(
-                onTap: () {
-                  appState.selectZone(i);
-                },
-                child: Container(
-                  color: z.color,
-                  foregroundDecoration: outline,
-                  padding: EdgeInsets.symmetric(horizontal: 5),
-                  child: Row(
-                    children: [
-                      Expanded(child: Text(z.name, style: zoneNameStyle)),
-                      IconButton(
-                        icon: Icon(
-                          appState.zones[i].isVisible
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                        ),
-                        onPressed: () {
-                          appState.toggleZoneVisibility(i);
+                      return InkWell(
+                        onTap: () {
+                          appState.selectZone(i);
                         },
-                      ),
-                      IconButton(
-                        icon: Icon(
-                          Icons.delete,
-                          color: theme.colorScheme.error,
+                        child: Container(
+                          color: z.color,
+                          foregroundDecoration: outline,
+                          padding: EdgeInsets.symmetric(horizontal: 5),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(z.name, style: zoneNameStyle),
+                              ),
+                              IconButton(
+                                icon: Icon(
+                                  appState.zones[i].isVisible
+                                      ? Icons.visibility
+                                      : Icons.visibility_off,
+                                ),
+                                onPressed: () {
+                                  appState.toggleZoneVisibility(i);
+                                },
+                              ),
+                              IconButton(
+                                icon: Icon(
+                                  Icons.delete,
+                                  color: theme.colorScheme.error,
+                                ),
+                                onPressed: () {
+                                  appState.removeZone(i);
+                                },
+                              ),
+                            ],
+                          ),
                         ),
-                        onPressed: () {
-                          appState.removeZone(i);
-                        },
-                      ),
-                    ],
+                      );
+                    },
                   ),
-                ),
-              );
-            },
-          ),
         ),
         Container(
           color: theme.colorScheme.primaryContainer,
