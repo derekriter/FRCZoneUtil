@@ -1,0 +1,13 @@
+{
+  "imagePath": "res/Reefscape2025.png",
+  "fieldDimensions": {
+    "x": 17.54823,
+    "y": 8.0518
+  },
+  "fieldBoundingBox": {
+    "x1": 724,
+    "y1": 2666,
+    "x2": 5804,
+    "y2": 334
+  }
+}
