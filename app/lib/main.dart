@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 
-import 'constants.dart';
+import 'constants.dart' as constants;
 import 'data.dart';
 import 'field.dart';
 import 'loader.dart';
@@ -15,7 +15,7 @@ import 'loader.dart';
 void main() async {
   //Set window title
   WidgetsFlutterBinding.ensureInitialized();
-  await windowManager.setTitle("FRC Zone Utility");
+  await windowManager.setTitle(constants.appTitle);
 
   runApp(const AppRoot());
 }
@@ -28,12 +28,10 @@ class AppRoot extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (context) => AppState(),
       child: MaterialApp(
-        title: "FRC Zone Utility",
+        title: constants.appTitle,
         theme: ThemeData(
           useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: Color.fromRGBO(0, 118, 40, 1.0),
-          ),
+          colorScheme: constants.colorScheme,
         ),
         home: const HomePage(),
       ),
@@ -43,7 +41,7 @@ class AppRoot extends StatelessWidget {
 
 class AppState extends ChangeNotifier {
   final List<Zone> _zones = [];
-  String _selectedMap = mapLocations[0]; /*default to first in list*/
+  String _selectedMap = constants.mapLocations[constants.defaultMap];
   MapState _mapState = MapState.none;
   MapData? _mapData;
   int? _selectedZone; //null means no field is selected
@@ -73,7 +71,7 @@ class AppState extends ChangeNotifier {
   }
 
   void setSelectedMap(String val) {
-    if (!mapLocations.contains(val)) {
+    if (!constants.mapLocations.contains(val)) {
       throw ArgumentError.value(
         val,
         "Cannot set selectedMap to non-existant map",

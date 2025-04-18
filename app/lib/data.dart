@@ -1,6 +1,8 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 
+import 'constants.dart' as constants;
+
 class Vector2d extends Equatable {
   Vector2d(this.x, this.y);
 
@@ -118,7 +120,10 @@ class Zone extends Equatable {
       final p = StringBuffer();
       for (Vector2d v in points) {
         /*only write 6 decimal places*/
-        p.write("${v.x.toStringAsFixed(7)}, ${v.y.toStringAsFixed(7)}, ");
+        p.write(
+          "${v.x.toStringAsFixed(constants.jsonDoubleDecimalPlaces)}, "
+          "${v.y.toStringAsFixed(constants.jsonDoubleDecimalPlaces)}, ",
+        );
       }
 
       /*cut off last space and comma*/
@@ -133,6 +138,10 @@ class Zone extends Equatable {
     final int b = argb & 0xFF;
 
     return '{"name": "$name", "color": [$r, $g, $b], "points": [$pArr]}';
+  }
+
+  Zone clone() {
+    return Zone(name: name, color: color, points: List.from(points));
   }
 
   @override

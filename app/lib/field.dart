@@ -6,6 +6,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'constants.dart' as constants;
 import 'constants.dart';
 import 'data.dart';
 import 'main.dart';
@@ -238,12 +239,12 @@ class MapDisplay extends CustomPainter {
     final polygonStroke =
         Paint()
           ..color = z.color
-          ..strokeWidth = 3
+          ..strokeWidth = constants.mapPolygonWeight
           ..style = PaintingStyle.stroke;
     final polygonFill =
         Paint.from(polygonStroke)
           ..style = PaintingStyle.fill
-          ..color = polygonStroke.color.withAlpha(64);
+          ..color = polygonStroke.color.withAlpha(constants.mapPolygonAlpha);
     final pointStyle = Paint.from(polygonStroke)..style = PaintingStyle.fill;
 
     final path = Path();
@@ -254,7 +255,7 @@ class MapDisplay extends CustomPainter {
           fieldBB.left + p.x.toDouble() * meterConvFactor.x,
           fieldBB.bottom - p.y.toDouble() * meterConvFactor.y,
         ),
-        5,
+        constants.mapPolygonRadius,
         pointStyle,
       );
 

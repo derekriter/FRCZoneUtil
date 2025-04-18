@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'constants.dart' as constants;
 import 'data.dart';
 import 'main.dart';
 
@@ -18,7 +19,6 @@ class ToolbarPanel extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          flex: 1,
           child: OutlinedButton(
             onPressed: () async {
               if (appState.zones.isEmpty) {
@@ -44,7 +44,7 @@ class ToolbarPanel extends StatelessWidget {
               }
 
               String? outputFile = await FilePicker.platform.saveFile(
-                fileName: "map.json" /*suggested filename*/,
+                fileName: constants.defaultSaveName /*suggested filename*/,
               );
               if (outputFile == null) {
                 /*users closed file picker*/
@@ -59,7 +59,6 @@ class ToolbarPanel extends StatelessWidget {
           ),
         ),
         Expanded(
-          flex: 1,
           child: OutlinedButton(
             onPressed: () async {
               FilePickerResult? result = await FilePicker.platform.pickFiles();

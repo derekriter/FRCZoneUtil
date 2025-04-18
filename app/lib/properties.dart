@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import 'constants.dart' as constants;
 import 'data.dart';
 import 'main.dart';
 
@@ -45,9 +46,7 @@ class PropertiesPanel extends StatelessWidget {
                         controller: nameController,
                         inputFormatters: [
                           FilteringTextInputFormatter.allow(
-                            RegExp(
-                              r'[a-zA-Z0-9!@#$%^&*()-_=+\[\]{}\\|;:,.<>/?~` ]',
-                            ),
+                            constants.zoneNameAllowPattern,
                           ),
                         ],
                         onSubmitted: (String newVal) {
@@ -67,22 +66,12 @@ class PropertiesPanel extends StatelessWidget {
                 SizedBox(
                   width: 100,
                   child: GridView.count(
-                    crossAxisCount: 3,
+                    crossAxisCount: constants.zoneColorChooserColumns,
                     shrinkWrap: true,
                     mainAxisSpacing: 5,
                     crossAxisSpacing: 5,
                     children:
-                        [
-                          Colors.red,
-                          Colors.orange,
-                          Colors.yellow,
-                          Colors.green,
-                          Colors.teal,
-                          Colors.blue,
-                          Colors.deepPurple,
-                          Colors.pink,
-                          Colors.grey,
-                        ].map((Color col) {
+                        constants.zoneColorChooserOptions.map((Color col) {
                           return InkWell(
                             onTap: () {
                               appState.setZoneColor(
@@ -112,23 +101,6 @@ class PropertiesPanel extends StatelessWidget {
                   final yController =
                       TextEditingController()
                         ..text = zone.points[i].y.toString();
-                  final doubleFormatter = TextInputFormatter.withFunction((
-                    TextEditingValue oldValue,
-                    TextEditingValue newValue,
-                  ) {
-                    if (newValue.text.isEmpty) {
-                      return newValue; //allow deleting field
-                    }
-
-                    try {
-                      double.parse(newValue.text);
-                      //use new value
-                      return newValue;
-                    } catch (_) {
-                      //discard invalid value and use old one
-                      return oldValue;
-                    }
-                  });
                   final hasDeleteButtons = zone.points.length > 3;
 
                   return Row(
@@ -138,7 +110,7 @@ class PropertiesPanel extends StatelessWidget {
                       Expanded(
                         child: TextField(
                           controller: xController,
-                          inputFormatters: [doubleFormatter],
+                          inputFormatters: [constants.doubleFormatter],
                           onSubmitted:
                               (String newVal) =>
                                   _setPointX(i, appState, newVal),
@@ -150,7 +122,7 @@ class PropertiesPanel extends StatelessWidget {
                       Expanded(
                         child: TextField(
                           controller: yController,
-                          inputFormatters: [doubleFormatter],
+                          inputFormatters: [constants.doubleFormatter],
                           onSubmitted:
                               (String newVal) =>
                                   _setPointY(i, appState, newVal),

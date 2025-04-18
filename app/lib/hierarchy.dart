@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'constants.dart' as constants;
 import 'data.dart';
 import 'main.dart';
 
@@ -96,17 +97,7 @@ class HierarchyPanel extends StatelessWidget {
                   icon: Icon(Icons.add),
                   onPressed: () {
                     //add default zone
-                    appState.addZone(
-                      Zone(
-                        name: "NewZone",
-                        points: [
-                          Vector2d(0, 0),
-                          Vector2d(0, 3),
-                          Vector2d(2.598, 1.5),
-                        ],
-                        color: Colors.grey,
-                      ),
-                    );
+                    appState.addZone(constants.defaultNewZone.clone());
                   },
                 ),
               ),
