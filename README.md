@@ -1,2 +1,2 @@
 # FRCZoneUtil
-A tool for location-based events in conjuction with FIRST robotics
+A WIP tool for triggering code when the robot is within certain regions of the field
