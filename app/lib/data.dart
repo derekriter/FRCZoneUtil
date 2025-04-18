@@ -42,6 +42,29 @@ class Zone extends Equatable {
   Color color;
   bool isVisible;
 
+  String toJSON() {
+    late final String pArr;
+    if (points.isNotEmpty) {
+      final p = StringBuffer();
+      for (Vector2d v in points) {
+        /*only write 6 decimal places*/
+        p.write("${v.x.toStringAsFixed(7)}, ${v.y.toStringAsFixed(7)}, ");
+      }
+
+      /*cut off last space and comma*/
+      pArr = p.toString().substring(0, p.length - 2);
+    } else {
+      pArr = "";
+    }
+
+    final int argb = color.toARGB32();
+    final int r = (argb >> 16) & 0xFF;
+    final int g = (argb >> 8) & 0xFF;
+    final int b = argb & 0xFF;
+
+    return '{"name": "$name", "color": [$r, $g, $b], "points": [$pArr]}';
+  }
+
   @override
   List<Object?> get props => [name, points, color, isVisible];
 
