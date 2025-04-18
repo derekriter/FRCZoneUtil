@@ -86,30 +86,12 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setMapLoading() {
-    _mapState = MapState.loading;
-    _mapData = null;
-    notifyListeners();
-  }
-
-  void setMapError() {
-    _mapState = MapState.error;
-    _mapData = null;
-    notifyListeners();
-  }
-
-  void setMapSuccess(MapData data) {
-    _mapState = MapState.success;
-    _mapData = data;
-    notifyListeners();
-  }
-
   void loadMapData({bool first = false}) {
     if (first) {
       _mapState = MapState.loading;
       _mapData = null;
     } else if (_mapState != MapState.loading) {
-      setMapLoading();
+      _setMapLoading();
     }
 
     loadPackagedJSON(_selectedMap)
@@ -117,23 +99,23 @@ class AppState extends ChangeNotifier {
           try {
             MapData.fromJSON(json)
                 .then((MapData data) {
-                  setMapSuccess(data);
+                  _setMapSuccess(data);
                 })
                 .onError((err, _) {
                   print(err);
 
-                  setMapError();
+                  _setMapError();
                 });
           } catch (err) {
             print(err);
 
-            setMapError();
+            _setMapError();
           }
         })
         .onError((err, _) {
           print(err);
 
-          setMapError();
+          _setMapError();
         });
   }
 
@@ -172,6 +154,13 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void resetWithNewZones(List<Zone> zones) {
+    _selectedZone = null;
+    _zones.clear();
+    _zones.addAll(zones);
+    notifyListeners();
+  }
+
   List<Zone> get zones => _zones;
   String get selectedMap => _selectedMap;
   MapState get mapState => _mapState;
@@ -179,6 +168,24 @@ class AppState extends ChangeNotifier {
   MapData? get mapData => _mapData;
   bool get hasSelectedZone => _selectedZone != null;
   int? get selectedZone => _selectedZone;
+
+  void _setMapLoading() {
+    _mapState = MapState.loading;
+    _mapData = null;
+    notifyListeners();
+  }
+
+  void _setMapError() {
+    _mapState = MapState.error;
+    _mapData = null;
+    notifyListeners();
+  }
+
+  void _setMapSuccess(MapData data) {
+    _mapState = MapState.success;
+    _mapData = data;
+    notifyListeners();
+  }
 }
 
 class HomePage extends StatelessWidget {

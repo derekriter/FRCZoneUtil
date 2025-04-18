@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -59,7 +60,32 @@ class ToolbarPanel extends StatelessWidget {
         ),
         Expanded(
           flex: 1,
-          child: OutlinedButton(onPressed: () {}, child: Text("Open")),
+          child: OutlinedButton(
+            onPressed: () async {
+              FilePickerResult? result = await FilePicker.platform.pickFiles();
+              if (result == null) {
+                /*user cancelled open*/
+                return;
+              }
+
+              File file = File(result.files.single.path!);
+              final json =
+                  jsonDecode(await file.readAsString()) as List<dynamic>;
+
+              List<Zone> zones = [];
+              for (dynamic item in json) {
+                if (item is! Map<String, dynamic>) {
+                  throw FormatException(
+                    "Invalid JSON, root list must contain only objects in $json",
+                  );
+                }
+                zones.add(Zone.fromJSON(item));
+              }
+
+              appState.resetWithNewZones(zones);
+            },
+            child: Text("Open"),
+          ),
         ),
       ],
     );
