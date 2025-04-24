@@ -15,14 +15,14 @@ public class Rect {
      * Create a Rect object that sizes itself to perfectly include all points in the given set. The boundaries will be set to be exactly on the furthest point in any given cardinal direction.
      * @return If the given points is empty then return null, otherwise return the bounding Rect
      */
-    public static Rect fromPoints(Vector2d[] points) {
+    public static Rect fromPoints(Point2d[] points) {
         if(points.length == 0)
             return null;
 
         double minX = 0, minY = 0, maxX = 0, maxY = 0;
 
         boolean first = true;
-        for(Vector2d p : points) {
+        for(Point2d p : points) {
             if(first) {
                 minX = maxX = p.x;
                 minY = maxY = p.y;
@@ -62,7 +62,7 @@ public class Rect {
     /**
      * Test if a point is inside the rect. Includes the boundaries, so if a point is on the boundary, then it is contained.
      */
-    public boolean contains(Vector2d point) {
+    public boolean contains(Point2d point) {
         return
             minX() <= point.x && point.x <= maxX()
             && minY() <= point.y && point.y <= maxY();

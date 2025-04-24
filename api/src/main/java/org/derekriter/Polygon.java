@@ -4,10 +4,10 @@ import java.util.Arrays;
 
 public class Polygon {
 
-    public final Vector2d[] points;
+    public final Point2d[] points;
     public final Rect boundingBox;
 
-    public Polygon(Vector2d[] _points) {
+    public Polygon(Point2d[] _points) {
         if(_points.length < 3) {
             throw new IllegalArgumentException("Cannot create a polygon from less than 3 points");
         }
@@ -16,7 +16,7 @@ public class Polygon {
         boundingBox = Rect.fromPoints(points);
     }
 
-    public boolean containsPoint(Vector2d point) {
+    public boolean containsPoint(Point2d point) {
         //first check if point is within bounding box
         if(!boundingBox.contains(point))
             return false;

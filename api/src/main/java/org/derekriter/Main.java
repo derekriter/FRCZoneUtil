@@ -2,14 +2,12 @@ package org.derekriter;
 
 public final class Main {
     public static void main(String[] args) {
-        try {
-            ZoneUtil.initFromFile("/diamond.json");
-        }
-        catch(Exception e) {
-            System.err.println("Failed to load map file");
+        ZoneUtilResult<Void> err;
+        if((err = ZoneUtil.initFromFile("/diamond.json")).isError()) {
+            System.err.printf("A '%s' error occurred while initializing ZoneUtil\n", err.getResult().name());
             return;
         }
 
-        System.out.println(ZoneUtil.isPointInZone(new Vector2d(0, 2), "DiamondZone"));
+        System.out.println(ZoneUtil.isPointInZone(new Point2d(0, 2), "DiamondZone").getData());
     }
 }

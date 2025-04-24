@@ -34,9 +34,9 @@ public class Zone {
             throw new IllegalArgumentException("Invalid JSON, required field 'points' must have a length that is a multiple of 2");
         }
 
-        Vector2d[] points = new Vector2d[rawPoints.size() / 2];
+        Point2d[] points = new Point2d[rawPoints.size() / 2];
         for(int i = 0; i < points.length; i++) {
-            points[i] = new Vector2d(rawPoints.get(i * 2), rawPoints.get(i * 2 + 1));
+            points[i] = new Point2d(rawPoints.get(i * 2), rawPoints.get(i * 2 + 1));
         }
 
         polygon = new Polygon(points);
